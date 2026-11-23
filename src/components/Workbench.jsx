@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { supabase } from '../lib/supabase'
 import {
   deleteNodeRow,
   deleteNodeTree,
@@ -33,10 +32,7 @@ const MOBILE_QUERY = '(max-width: 760px)'
 const isMobile = () => window.matchMedia(MOBILE_QUERY).matches
 const splitPath = (p) => p.split('/').filter(Boolean)
 
-export default function Workbench({ session }) {
-  const user = session.user
-  const userId = user.id
-
+export default function Workbench() {
   /* =============================================================== state */
 
   const [nodes, setNodes] = useState([])
@@ -50,7 +46,7 @@ export default function Workbench({ session }) {
   const [autoSave, setAutoSave] = usePersistentState('cv.autoSave', false)
   const [wordWrap, setWordWrap] = usePersistentState('cv.wordWrap', false)
   const [minimap, setMinimap] = usePersistentState('cv.minimap', true)
-  const [expandedList, setExpandedList] = usePersistentState(`cv.expanded.${userId}`, [])
+  const [expandedList, setExpandedList] = usePersistentState('cv.expanded', [])
   const expanded = useMemo(() => new Set(expandedList), [expandedList])
 
   const [selectedId, setSelectedId] = useState(null)
@@ -470,7 +466,7 @@ export default function Workbench({ session }) {
         if (hit.type !== 'folder') throw new Error(`'${name}' already exists and is a file.`)
         return hit
       }
-      const node = await insertNode({ id: uuid(), parentId, name, type: 'folder', userId })
+      const node = await insertNode({ id: uuid(), parentId, name, type: 'folder' })
       add(node)
       createdIds.push(node.id)
       upsertNodes([node])
@@ -495,7 +491,7 @@ export default function Workbench({ session }) {
       const name = segments.pop()
       const resolver = createResolver()
       const parentId = await resolver.ensurePath(job.parentId, segments) // "src/app/index.js" works too
-      const node = await insertNode({ id: uuid(), parentId, name, type: job.type, userId })
+      const node = await insertNode({ id: uuid(), parentId, name, type: job.type })
       upsertNodes([node])
       expand([parentId, ...resolver.createdIds])
       setSelectedId(node.id)
@@ -712,7 +708,7 @@ export default function Workbench({ session }) {
             let node = existing
             const created = !existing
             if (created) {
-              node = await insertNode({ id: uuid(), parentId, name, type: 'file', userId })
+              node = await insertNode({ id: uuid(), parentId, name, type: 'file' })
               resolver.add(node)
               upsertNodes([node])
             }
@@ -791,21 +787,6 @@ export default function Workbench({ session }) {
     document.body.classList.add('resizing')
   }
 
-  async function signOut() {
-    const dirty = live.current.tabs.filter((t) => t.dirty).length
-    if (dirty) {
-      const choice = await showDialog({
-        type: 'warning',
-        message: `You have ${dirty} unsaved file${dirty === 1 ? '' : 's'}. Sign out anyway?`,
-        detail: 'Unsaved changes will be lost.',
-        buttons: ['Sign Out', 'Cancel'],
-        cancelId: 1,
-      })
-      if (choice !== 0) return
-    }
-    await supabase.auth.signOut()
-  }
-
   /* ============================================================ commands */
 
   const activeTab = tabs.find((t) => t.id === activeId) || null
@@ -824,7 +805,6 @@ export default function Workbench({ session }) {
     download: { category: 'File', label: 'Download', disabled: !activeNode, run: () => downloadNode(activeNode) },
     closeEditor: { category: 'View', label: 'Close Editor', disabled: !activeId, run: () => closeTab(activeId) },
     closeAll: { category: 'View', label: 'Close All Editors', disabled: !tabs.length, run: closeAll },
-    signOut: { category: 'Account', label: 'Sign Out', run: signOut },
     undo: { category: 'Edit', label: 'Undo', keys: 'Ctrl+Z', disabled: !hasEditor, run: () => editorAction('undo') },
     redo: { category: 'Edit', label: 'Redo', keys: 'Ctrl+Y', disabled: !hasEditor, run: () => editorAction('redo') },
     find: { category: 'Edit', label: 'Find', keys: 'Ctrl+F', disabled: !hasEditor, run: () => editorAction('actions.find') },
@@ -900,7 +880,7 @@ export default function Workbench({ session }) {
   }
 
   const menus = [
-    ['File', ['newFile', 'newFolder', '-', 'uploadFiles', 'uploadFolder', '-', 'save', 'saveAll', 'autoSave', '-', 'download', '-', 'closeEditor', 'closeAll', '-', 'signOut']],
+    ['File', ['newFile', 'newFolder', '-', 'uploadFiles', 'uploadFolder', '-', 'save', 'saveAll', 'autoSave', '-', 'download', '-', 'closeEditor', 'closeAll']],
     ['Edit', ['undo', 'redo', '-', 'find', 'replace', '-', 'format']],
     ['View', ['palette', '-', 'explorer', 'search', '-', 'sidebar', 'wordWrap', 'minimap']],
     ['Go', ['goFile', 'goLine']],
@@ -1049,11 +1029,6 @@ export default function Workbench({ session }) {
   )
 
   const currentActivity = activities[0]
-  const accountItems = [
-    { label: user.email, header: true },
-    '-',
-    { label: 'Sign Out', onClick: signOut },
-  ]
   const manageItems = [
     { label: 'Command Palette…', shortcut: 'Ctrl+Shift+P', onClick: () => setQuick('commands') },
     { label: 'Keyboard Shortcuts', onClick: commands.shortcuts.run },
@@ -1080,7 +1055,6 @@ export default function Workbench({ session }) {
           view={view}
           sidebarVisible={sidebarVisible}
           onSelect={onActivity}
-          onAccount={(e) => openMenuAt(e, accountItems)}
           onManage={(e) => openMenuAt(e, manageItems)}
         />
 
@@ -1092,7 +1066,7 @@ export default function Workbench({ session }) {
                 <SearchPanel files={fileList} activeId={activeId} onOpen={openFile} />
               ) : (
                 <Explorer
-                  title={user.email?.split('@')[0] || 'My Files'}
+                  title="CodeVault"
                   index={index}
                   loading={loading}
                   expanded={expanded}
@@ -1166,13 +1140,8 @@ export default function Workbench({ session }) {
         language={hasEditor && activeNode ? languageFor(activeNode.name) : null}
         size={activeNode ? Number(activeNode.size) || 0 : null}
         autoSave={autoSave}
-        email={user.email}
         onToggleAutoSave={toggleAutoSave}
         onGoToLine={() => editorAction('editor.action.gotoLine')}
-        onAccount={(e) => {
-          const r = e.currentTarget.getBoundingClientRect()
-          setMenu({ x: r.left, y: r.top - 80, items: accountItems })
-        }}
       />
 
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />}

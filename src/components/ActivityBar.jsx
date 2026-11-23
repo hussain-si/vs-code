@@ -3,7 +3,7 @@ const VIEWS = [
   { id: 'search', icon: 'search', title: 'Search (Ctrl+Shift+F)' },
 ]
 
-export default function ActivityBar({ view, sidebarVisible, onSelect, onAccount, onManage }) {
+export default function ActivityBar({ view, sidebarVisible, onSelect, onManage }) {
   return (
     <nav className="activitybar" aria-label="Activity bar">
       <div>
@@ -19,9 +19,6 @@ export default function ActivityBar({ view, sidebarVisible, onSelect, onAccount,
         ))}
       </div>
       <div>
-        <button className="activity-item" title="Accounts" onClick={onAccount}>
-          <i className="codicon codicon-account" />
-        </button>
         <button className="activity-item" title="Manage" onClick={onManage}>
           <i className="codicon codicon-settings-gear" />
         </button>

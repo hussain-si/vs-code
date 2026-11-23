@@ -14,13 +14,17 @@ Built with **React + HTML + CSS** (Vite) and ready to deploy on **Vercel**.
 | What | Where |
 | --- | --- |
 | Folder / file tree (name, parent, size, type) | Postgres table `public.nodes` |
-| File contents (the actual code / bytes) | Supabase Storage bucket `user-files`, at `<user_id>/<file_id>` |
+| File contents (the actual code / bytes) | Supabase Storage bucket `user-files`, at `<file_id>` |
 
 * Files up to 6 MB are uploaded in a single request.
 * Files over 6 MB use **resumable chunked uploads (TUS)**, which is the Supabase
   method for big files (up to 500 GB per file on paid plans). An interrupted
   upload of a file from disk resumes where it stopped.
-* Row Level Security means each signed-in user can only see and change **their own** files.
+
+> ⚠️ **There is no login.** The app is one shared storage space. Anyone who has the
+> app URL can view, edit and delete **every** file. The Supabase key doesn't protect
+> anything because it ships inside the app. Keep the URL private, and don't store
+> anything sensitive.
 
 > The only size limit is the one set in your Supabase project: **Project Settings →
 > Storage → Upload file size limit**. On the Free plan the maximum is 50 MB per file;
@@ -39,7 +43,7 @@ Built with **React + HTML + CSS** (Vite) and ready to deploy on **Vercel**.
 * Image / video / audio / PDF preview; binary files can be downloaded
 * Quick Open (`Ctrl+P`), Command Palette (`Ctrl+Shift+P` / `F1`), file-name search
 * Download any file; storage usage shown in the Explorer and on the Welcome page
-* Email + password sign-in (Supabase Auth)
+* No sign-in: open the URL and start working
 
 ---
 
@@ -47,14 +51,10 @@ Built with **React + HTML + CSS** (Vite) and ready to deploy on **Vercel**.
 
 1. Create a project at <https://supabase.com>.
 2. Open **SQL Editor → New query**, paste the contents of [`supabase/schema.sql`](supabase/schema.sql), and click **Run**.
-   This creates the `nodes` table, its security rules, and the private `user-files` storage bucket.
-3. **Authentication → URL Configuration**
-   * *Site URL*: your Vercel URL, e.g. `https://your-app.vercel.app`
-   * *Redirect URLs*: add `http://localhost:5173` for local development
-4. Optional, for quick testing: **Authentication → Sign In / Providers → Email**. Turn off
-   *Confirm email* so new accounts can sign in right away.
-5. Optional: raise **Project Settings → Storage → Upload file size limit** if you need files larger than 50 MB.
-6. Copy the **Project URL** and the **anon** (or **publishable**) key from **Project Settings → API**.
+   This creates the `nodes` table, its access rules, and the `user-files` storage bucket.
+   (If you ran the earlier login-based version, running it again upgrades it.)
+3. Optional: raise **Project Settings → Storage → Upload file size limit** if you need files larger than 50 MB.
+4. Copy the **Project URL** and the **anon** (or **publishable**) key from **Project Settings → API**.
 
 ## 2. Run locally
 

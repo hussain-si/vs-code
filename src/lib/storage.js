@@ -1,7 +1,7 @@
 /**
  * Data layer.
  *  - Tree (folders/files metadata) lives in the `nodes` Postgres table.
- *  - File contents live in Supabase Storage at `<user_id>/<node_id>`.
+ *  - File contents live in Supabase Storage at `<node_id>`.
  *    Contents are never size-limited by the app: small files use a normal
  *    upload, anything above 6 MB uses resumable (TUS) chunked uploads,
  *    which is what Supabase recommends for large files (up to 500 GB).
@@ -14,7 +14,7 @@ export const RESUMABLE_THRESHOLD = 6 * 1024 * 1024
 const TUS_CHUNK_SIZE = 6 * 1024 * 1024 // Supabase requires exactly 6 MB chunks
 const PAGE_SIZE = 1000
 
-export const objectPath = (node) => `${node.user_id}/${node.id}`
+export const objectPath = (node) => node.id
 
 function dbError(error) {
   if (!error) return new Error('Unexpected database error')
@@ -53,10 +53,10 @@ export async function fetchAllNodes() {
   }
 }
 
-export async function insertNode({ id, parentId, name, type, userId, size = 0, mime = null }) {
+export async function insertNode({ id, parentId, name, type, size = 0, mime = null }) {
   const { data, error } = await supabase
     .from('nodes')
-    .insert({ id, parent_id: parentId ?? null, name, type, user_id: userId, size, mime_type: mime })
+    .insert({ id, parent_id: parentId ?? null, name, type, size, mime_type: mime })
     .select()
     .single()
   if (error) throw dbError(error)
@@ -119,7 +119,7 @@ function resumableUpload(path, blob, contentType, onProgress) {
     const upload = new tus.Upload(blob, {
       endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
       retryDelays: [0, 3000, 5000, 10000, 20000],
-      headers: { apikey: SUPABASE_KEY, 'x-upsert': 'true' },
+      headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, 'x-upsert': 'true' },
       uploadDataDuringCreation: true,
       removeFingerprintOnSuccess: true,
       // Only real files from disk can be resumed after a reload; editor saves start fresh.
@@ -128,11 +128,6 @@ function resumableUpload(path, blob, contentType, onProgress) {
         ['codevault', path, blob.size, isFile ? blob.name : '', isFile ? blob.lastModified : Date.now()].join('|'),
       chunkSize: TUS_CHUNK_SIZE,
       metadata: { bucketName: BUCKET, objectName: path, contentType, cacheControl: '0' },
-      onBeforeRequest: async (req) => {
-        // Long uploads can outlive an access token, so always send a fresh one.
-        const { data } = await supabase.auth.getSession()
-        req.setHeader('Authorization', `Bearer ${data.session?.access_token ?? SUPABASE_KEY}`)
-      },
       onProgress: (sent, total) => onProgress?.(total ? sent / total : 0),
       onSuccess: () => resolve(),
       onError: (err) => reject(storageError(err)),

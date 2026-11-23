@@ -8,10 +8,8 @@ export default function StatusBar({
   language,
   size,
   autoSave,
-  email,
   onToggleAutoSave,
   onGoToLine,
-  onAccount,
 }) {
   const activity = activities[0]
 
@@ -60,10 +58,6 @@ export default function StatusBar({
         >
           <i className={`codicon codicon-${autoSave ? 'check-all' : 'circle-slash'}`} />
           <span className="hide-narrow">Auto Save</span>
-        </button>
-        <button className="status-item hide-narrow" title={`Signed in as ${email}`} onClick={onAccount}>
-          <i className="codicon codicon-account" />
-          <span>{email}</span>
         </button>
       </div>
     </footer>

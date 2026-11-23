@@ -189,23 +189,6 @@ code {
   }
 }
 
-.splash {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.splash img {
-  width: 72px;
-  opacity: 0.35;
-  animation: pulse 1.4s ease-in-out infinite;
-}
-@keyframes pulse {
-  50% {
-    opacity: 0.7;
-  }
-}
-
 body.resizing,
 body.resizing * {
   cursor: ew-resize !important;

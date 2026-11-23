@@ -9,8 +9,9 @@ export const BUCKET = 'user-files'
 
 export const isConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY)
 
+// No login: every request uses the publishable/anon key directly.
 export const supabase = isConfigured
   ? createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     })
   : null

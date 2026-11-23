@@ -6,7 +6,7 @@ import './styles/workbench.css'
 import './styles/explorer.css'
 import './styles/editor.css'
 import './styles/overlays.css'
-import './styles/auth.css'
+import './styles/setup.css'
 import App from './App.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
