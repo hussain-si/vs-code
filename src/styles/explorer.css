@@ -1,0 +1,301 @@
+.explorer,
+.search-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.pane-header {
+  height: 22px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sidebar-fg);
+  cursor: pointer;
+  user-select: none;
+}
+.pane-header > .codicon {
+  font-size: 16px;
+  margin: 0 2px;
+}
+.pane-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pane-actions {
+  display: none;
+  gap: 2px;
+}
+.sidebar:hover .pane-actions,
+.pane-header:focus-within .pane-actions {
+  display: flex;
+}
+@media (hover: none) {
+  .pane-actions {
+    display: flex;
+  }
+}
+
+.progress-bar {
+  height: 2px;
+  flex: none;
+  position: relative;
+  overflow: hidden;
+}
+.progress-bar > div {
+  height: 100%;
+  width: 0;
+  background: #0e70c0;
+  transition: width 0.2s;
+}
+.progress-bar:not(.active) > div {
+  display: none;
+}
+.progress-bar.active.indeterminate > div {
+  width: 2%;
+  animation: progress 4s linear infinite;
+}
+@keyframes progress {
+  from {
+    transform: translateX(0) scaleX(1);
+  }
+  50% {
+    transform: translateX(2500%) scaleX(3);
+  }
+  to {
+    transform: translateX(4900%) scaleX(1);
+  }
+}
+
+/* ---------------------------------------------------------- tree */
+.tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+  padding-bottom: 12px;
+  position: relative;
+}
+.tree.drop-root {
+  background: var(--list-drop);
+}
+.tree-row {
+  position: relative;
+  height: 22px;
+  line-height: 22px;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  color: var(--sidebar-fg);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.tree-row:hover {
+  background: var(--list-hover);
+}
+.tree-row.selected {
+  background: var(--list-active);
+}
+.tree:focus .tree-row.selected {
+  background: var(--list-focus);
+  border-color: var(--focus-border);
+}
+.tree-row.drop-target {
+  background: var(--list-drop);
+}
+.tree-row.editing,
+.tree-row.editing:hover {
+  background: none;
+  cursor: default;
+  overflow: visible;
+  z-index: 2;
+}
+.twistie {
+  width: 16px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.twistie .codicon {
+  font-size: 16px;
+}
+.tree-row .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 8px;
+}
+.indent-guide {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: transparent;
+  pointer-events: none;
+}
+.tree:hover .indent-guide,
+.tree:focus .indent-guide {
+  background: #585858;
+}
+
+.file-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+.file-icon.glyph {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1;
+}
+
+.inline-input {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin-right: 4px;
+}
+.inline-input input {
+  width: 100%;
+  height: 20px;
+  padding: 0 4px;
+  border: 1px solid var(--focus-border);
+  background: var(--input-bg);
+  color: var(--input-fg);
+  outline: none;
+  font-size: 13px;
+}
+.inline-input input.invalid {
+  border-color: var(--error-border);
+}
+.input-message {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 20px;
+  padding: 4px 6px;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-top: 0;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  z-index: 5;
+}
+
+.explorer-empty {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  line-height: 1.5;
+}
+.explorer-empty p {
+  margin: 0;
+}
+
+.pane-footer {
+  height: 26px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-top: 1px solid rgba(204, 204, 204, 0.15);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.pane-footer .codicon {
+  font-size: 14px;
+}
+.pane-meta {
+  margin-left: auto;
+  font-weight: 400;
+  text-transform: none;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------------------------------------------------- search */
+.search-box {
+  margin: 0 12px 0 20px;
+  display: flex;
+  align-items: center;
+  background: var(--input-bg);
+  border: 1px solid transparent;
+}
+.search-box:focus-within {
+  border-color: var(--focus-border);
+}
+.search-box input {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--input-fg);
+}
+.search-summary {
+  padding: 8px 20px 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.search-results {
+  flex: 1;
+  overflow: auto;
+}
+.search-result {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.search-result:hover {
+  background: var(--list-hover);
+}
+.search-result.selected {
+  background: var(--list-active);
+}
+.search-name {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-dir {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+mark {
+  background: none;
+  color: #2aaaff;
+  font-weight: 600;
+}

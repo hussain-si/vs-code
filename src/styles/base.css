@@ -1,0 +1,216 @@
+/* VS Code "Dark+" palette */
+:root {
+  --titlebar-bg: #3c3c3c;
+  --titlebar-fg: #cccccc;
+  --activitybar-bg: #333333;
+  --activitybar-fg: #ffffff;
+  --activitybar-inactive: #858585;
+  --sidebar-bg: #252526;
+  --sidebar-fg: #cccccc;
+  --sidebar-title-fg: #bbbbbb;
+  --editor-bg: #1e1e1e;
+  --editor-fg: #d4d4d4;
+  --tabs-bg: #252526;
+  --tab-inactive-bg: #2d2d2d;
+  --tab-active-bg: #1e1e1e;
+  --tab-inactive-fg: #969696;
+  --tab-active-fg: #ffffff;
+  --tab-border: #252526;
+  --statusbar-bg: #007acc;
+  --statusbar-fg: #ffffff;
+  --statusbar-remote-bg: #16825d;
+  --list-hover: #2a2d2e;
+  --list-active: #37373d;
+  --list-focus: #04395e;
+  --list-drop: #383b3d;
+  --focus-border: #007fd4;
+  --input-bg: #3c3c3c;
+  --input-fg: #cccccc;
+  --button-bg: #0e639c;
+  --button-hover: #1177bb;
+  --button-secondary-bg: #3a3d41;
+  --button-secondary-hover: #45494e;
+  --menu-bg: #252526;
+  --menu-fg: #cccccc;
+  --menu-selection: #04395e;
+  --menu-border: #454545;
+  --widget-shadow: rgba(0, 0, 0, 0.36);
+  --link: #3794ff;
+  --muted: #9d9d9d;
+  --error: #f14c4c;
+  --error-bg: #5a1d1d;
+  --error-border: #be1100;
+  --warning: #cca700;
+  --info: #3794ff;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, Ubuntu, 'Droid Sans', sans-serif;
+  --font-mono: Consolas, Menlo, Monaco, 'Courier New', monospace;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--editor-bg);
+  color: var(--sidebar-fg);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  margin-left: 3px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  color: #cccccc;
+  background: rgba(128, 128, 128, 0.17);
+  border: 1px solid rgba(51, 51, 51, 0.6);
+  border-bottom-color: rgba(68, 68, 68, 0.6);
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.36);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(121, 121, 121, 0.4);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 0.7);
+}
+
+/* Buttons */
+.btn {
+  height: 26px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: var(--button-secondary-bg);
+  color: #fff;
+  font-size: 13px;
+  line-height: 24px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn:hover {
+  background: var(--button-secondary-hover);
+}
+.btn.primary {
+  background: var(--button-bg);
+}
+.btn.primary:hover {
+  background: var(--button-hover);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn.block {
+  display: flex;
+  width: 100%;
+}
+.btn:focus-visible,
+.icon-btn:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 2px;
+}
+
+.icon-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.icon-btn:hover {
+  background: rgba(90, 93, 94, 0.31);
+}
+
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.splash {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.splash img {
+  width: 72px;
+  opacity: 0.35;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.7;
+  }
+}
+
+body.resizing,
+body.resizing * {
+  cursor: ew-resize !important;
+  user-select: none !important;
+}
+body.resizing iframe {
+  pointer-events: none;
+}

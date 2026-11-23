@@ -1,0 +1,247 @@
+.workbench {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------------------------------------------------- title bar */
+.titlebar {
+  height: 30px;
+  flex: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--titlebar-bg);
+  color: var(--titlebar-fg);
+  user-select: none;
+  z-index: 10;
+}
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+.titlebar-logo {
+  width: 16px;
+  height: 16px;
+  margin: 0 10px 0 12px;
+}
+.menubar {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+.menubar-item {
+  height: 22px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  cursor: default;
+  font-size: 13px;
+}
+.menubar-item:hover,
+.menubar-item.open {
+  background: rgba(255, 255, 255, 0.1);
+}
+.command-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(38vw, 600px);
+  height: 22px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #cccccc;
+  font-size: 12px;
+}
+.command-center:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.command-center span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.command-center .codicon {
+  font-size: 14px;
+}
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+}
+
+/* ---------------------------------------------------------- main area */
+.main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+.activitybar {
+  width: 48px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--activitybar-bg);
+  z-index: 3;
+}
+.activity-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--activitybar-inactive);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.activity-item .codicon {
+  font-size: 24px;
+}
+.activity-item:hover,
+.activity-item.active {
+  color: var(--activitybar-fg);
+}
+.activity-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--activitybar-fg);
+}
+
+.sidebar {
+  flex: none;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar-bg);
+  overflow: hidden;
+}
+.sidebar-backdrop {
+  display: none;
+}
+.sash {
+  width: 4px;
+  margin: 0 -2px;
+  flex: none;
+  position: relative;
+  z-index: 4;
+  cursor: ew-resize;
+  transition: background 0.1s 0.2s;
+}
+.sash:hover,
+body.resizing .sash {
+  background: var(--focus-border);
+}
+
+.sidebar-title {
+  height: 35px;
+  flex: none;
+  padding: 0 8px 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--sidebar-title-fg);
+}
+
+/* ---------------------------------------------------------- status bar */
+.statusbar {
+  height: 22px;
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  background: var(--statusbar-bg);
+  color: var(--statusbar-fg);
+  font-size: 12px;
+  user-select: none;
+  overflow: hidden;
+}
+.status-group {
+  display: flex;
+  min-width: 0;
+}
+.status-item {
+  height: 100%;
+  padding: 0 7px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: default;
+}
+button.status-item {
+  cursor: pointer;
+}
+button.status-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.status-item .codicon {
+  font-size: 14px;
+}
+.status-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-remote {
+  background: var(--statusbar-remote-bg);
+  padding: 0 10px;
+}
+
+/* ---------------------------------------------------------- mobile */
+@media (max-width: 760px) {
+  .menubar {
+    display: none;
+  }
+  .command-center {
+    position: static;
+    transform: none;
+    flex: 1;
+    width: auto;
+    margin: 0 8px;
+  }
+  .sidebar {
+    position: absolute;
+    left: 48px;
+    top: 0;
+    bottom: 0;
+    z-index: 20;
+    max-width: calc(100vw - 64px);
+    box-shadow: 0 0 16px rgba(0, 0, 0, 0.6);
+  }
+  .sidebar-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 19;
+    background: rgba(0, 0, 0, 0.35);
+  }
+  .sash {
+    display: none;
+  }
+  .hide-narrow {
+    display: none;
+  }
+}
