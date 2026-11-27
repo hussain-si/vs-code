@@ -21,6 +21,25 @@ function flatten(index, expanded, creating) {
   return rows
 }
 
+/** Map<folder id, total bytes of every file inside it, at any depth>. */
+function folderSizes(index) {
+  const sizes = new Map()
+  const total = (parentId) => {
+    let sum = 0
+    for (const n of index.children.get(parentId ?? ROOT) || []) sum += n.type === 'folder' ? total(n.id) : Number(n.size) || 0
+    if (parentId) sizes.set(parentId, sum)
+    return sum
+  }
+  total(null)
+  return sizes
+}
+
+function downloadTitle(index, selectedId) {
+  const node = selectedId ? index.byId.get(selectedId) : null
+  if (!node) return 'Download All as Zip'
+  return node.type === 'folder' ? `Download '${node.name}' as Zip` : `Download '${node.name}'`
+}
+
 export default function Explorer({
   title,
   index,
@@ -49,6 +68,7 @@ export default function Explorer({
   onNewFile,
   onNewFolder,
   onUpload,
+  onDownload,
   onRefresh,
   onCollapseAll,
 }) {
@@ -59,6 +79,7 @@ export default function Explorer({
 
   const rows = useMemo(() => flatten(index, expanded, creating), [index, expanded, creating])
   const nodeRows = useMemo(() => rows.filter((r) => r.kind === 'node'), [rows])
+  const sizes = useMemo(() => folderSizes(index), [index])
 
   useEffect(() => {
     if (!selectedId) return
@@ -193,6 +214,9 @@ export default function Explorer({
           <button className="icon-btn" title="Upload Files…" onClick={onUpload}>
             <i className="codicon codicon-cloud-upload" />
           </button>
+          <button className="icon-btn" title={downloadTitle(index, selectedId)} onClick={onDownload}>
+            <i className="codicon codicon-cloud-download" />
+          </button>
           <button className="icon-btn" title="Refresh Explorer" onClick={onRefresh}>
             <i className="codicon codicon-refresh" />
           </button>
@@ -276,6 +300,7 @@ export default function Explorer({
             const { node } = row
             const isFolder = node.type === 'folder'
             const open = isFolder && expanded.has(node.id)
+            const size = formatBytes(isFolder ? sizes.get(node.id) : node.size)
 
             if (renamingId === node.id) {
               return (
@@ -307,7 +332,7 @@ export default function Explorer({
                 aria-selected={selectedId === node.id}
                 className={classes.join(' ')}
                 style={padding}
-                title={isFolder ? node.name : `${node.name} · ${formatBytes(node.size)}`}
+                title={`${node.name} · ${size}`}
                 draggable
                 onClick={() => {
                   onSelect(node.id)
@@ -338,6 +363,7 @@ export default function Explorer({
                 </span>
                 {!isFolder && <FileIcon name={node.name} />}
                 <span className="label">{node.name}</span>
+                <span className="size">{size}</span>
               </div>
             )
           })}

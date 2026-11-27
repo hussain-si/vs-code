@@ -134,6 +134,14 @@
   text-overflow: ellipsis;
   padding-right: 8px;
 }
+.tree-row .size {
+  flex: none;
+  margin-left: auto;
+  padding-right: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 .indent-guide {
   position: absolute;
   top: -1px;

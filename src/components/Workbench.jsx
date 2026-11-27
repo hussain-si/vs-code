@@ -12,6 +12,7 @@ import {
 import { buildIndex, findChild, getAncestors, getDescendants, getPath, isAncestorOf } from '../lib/tree'
 import { isKnownBinary, LARGE_FILE_BYTES, languageFor, looksBinary, mediaKind } from '../lib/fileTypes'
 import { filesFromDataTransfer, filesFromFileList } from '../lib/dropFiles'
+import { zipEntries, zipStream } from '../lib/zip'
 import { formatBytes, uuid } from '../lib/format'
 import { MODEL_SCHEME, idFromModel, modelPath } from '../lib/models'
 import { useActivities, useNotifications, usePersistentState } from '../hooks'
@@ -28,6 +29,7 @@ import Notifications from './Notifications'
 
 const AUTO_SAVE_DELAY = 1000
 const UPLOAD_CONCURRENCY = 4
+const IN_MEMORY_ZIP_WARNING = 1024 * 1024 * 1024 // ask first before building a zip this big in memory
 const MOBILE_QUERY = '(max-width: 760px)'
 const isMobile = () => window.matchMedia(MOBILE_QUERY).matches
 const splitPath = (p) => p.split('/').filter(Boolean)
@@ -575,13 +577,83 @@ export default function Workbench() {
     if (revoke) setTimeout(() => URL.revokeObjectURL(href), 2000)
   }
 
+  /** Files download directly; folders download as a .zip. */
   async function downloadNode(node) {
-    if (!node || node.type !== 'file') return
+    if (!node) return
+    if (node.type === 'folder') return downloadZip(node)
     try {
       if (!Number(node.size)) return triggerDownload(URL.createObjectURL(new Blob([])), node.name, true)
       triggerDownload(await getSignedUrl(node, { download: true, expiresIn: 300 }), node.name)
     } catch (e) {
       notify('error', `Could not download '${node.name}': ${e.message}`)
+    }
+  }
+
+  /** Downloads `folder` (or, with null, everything) as a zip. */
+  async function downloadZip(folder) {
+    const entries = zipEntries(live.current.index, folder)
+    const files = entries.filter((e) => e.node.type === 'file')
+    const totalBytes = files.reduce((sum, e) => sum + (Number(e.node.size) || 0), 0)
+    const zipName = `${folder ? folder.name : 'CodeVault'}.zip`
+
+    if (!entries.length) return notify('info', 'There is nothing to download yet.')
+
+    // Chrome / Edge: write the zip straight to disk while it is built, so any size works.
+    // This has to be the first await so the browser still counts it as part of the click.
+    let writable = null
+    if (typeof window.showSaveFilePicker === 'function') {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: zipName,
+          types: [{ description: 'ZIP archive', accept: { 'application/zip': ['.zip'] } }],
+        })
+        writable = await handle.createWritable()
+      } catch (e) {
+        if (e?.name === 'AbortError') return // the user closed the save dialog
+        // Not allowed here (e.g. inside an iframe) → fall back to an in-memory download below.
+      }
+    }
+
+    if (!writable && totalBytes > IN_MEMORY_ZIP_WARNING) {
+      const choice = await showDialog({
+        type: 'warning',
+        message: `'${zipName}' will be about ${formatBytes(totalBytes)}. Download anyway?`,
+        detail:
+          'This browser has to build the whole zip in memory before saving it, which can fail for very large folders. ' +
+          'In Chrome or Edge it is written straight to disk instead.',
+        buttons: ['Download', 'Cancel'],
+        cancelId: 1,
+      })
+      if (choice !== 0) return
+    }
+
+    const failed = []
+    const activity = startActivity(`Zipping ${zipName}`)
+    try {
+      const stream = zipStream(entries, {
+        onProgress: (progress) => activity.update({ progress }),
+        onFileError: (entry, err) => failed.push(`${entry.path} (${err.message})`),
+      })
+      if (writable) {
+        await stream.pipeTo(writable) // closes the file when done, discards it on error
+      } else {
+        const blob = await new Response(stream).blob()
+        triggerDownload(URL.createObjectURL(blob), zipName, true)
+      }
+      if (failed.length) {
+        notify(
+          'warning',
+          `Downloaded '${zipName}', but ${failed.length} of ${files.length} file${files.length === 1 ? '' : 's'} could not be included: ` +
+            failed.slice(0, 3).join(', ') +
+            (failed.length > 3 ? ` …and ${failed.length - 3} more` : ''),
+        )
+      } else {
+        notify('info', `Downloaded '${zipName}' (${files.length} file${files.length === 1 ? '' : 's'}, ${formatBytes(totalBytes)}).`)
+      }
+    } catch (e) {
+      notify('error', `Could not download '${zipName}': ${e.message}`)
+    } finally {
+      activity.done()
     }
   }
 
@@ -606,15 +678,23 @@ export default function Workbench() {
   }
 
   function onInputFiles(e) {
-    const items = filesFromFileList(e.target.files || [])
+    const { items, skipped } = filesFromFileList(e.target.files || [])
     e.target.value = ''
+    reportSkipped(skipped)
     if (items.length) uploadItems(items, uploadTargetRef.current)
   }
 
   function dropFiles(dataTransfer, targetId) {
     filesFromDataTransfer(dataTransfer)
-      .then((items) => uploadItems(items, targetId))
+      .then(({ items, skipped }) => {
+        reportSkipped(skipped)
+        return uploadItems(items, targetId)
+      })
       .catch((e) => notify('error', `Could not read the dropped files: ${e.message}`))
+  }
+
+  function reportSkipped(skipped) {
+    if (skipped.size) notify('info', `Skipped ${[...skipped].join(', ')} – dependency, build and Git folders are not uploaded.`)
   }
 
   /** items: [{ path: 'a/b/c.txt', file }] and/or [{ path: 'a/empty', dir: true }] */
@@ -803,6 +883,7 @@ export default function Workbench() {
     saveAll: { category: 'File', label: 'Save All', disabled: !dirtyCount, run: saveAll },
     autoSave: { category: 'File', label: 'Auto Save', checked: autoSave, run: toggleAutoSave },
     download: { category: 'File', label: 'Download', disabled: !activeNode, run: () => downloadNode(activeNode) },
+    downloadAll: { category: 'File', label: 'Download All as Zip', disabled: !nodes.length, run: () => downloadZip(null) },
     closeEditor: { category: 'View', label: 'Close Editor', disabled: !activeId, run: () => closeTab(activeId) },
     closeAll: { category: 'View', label: 'Close All Editors', disabled: !tabs.length, run: closeAll },
     undo: { category: 'Edit', label: 'Undo', keys: 'Ctrl+Z', disabled: !hasEditor, run: () => editorAction('undo') },
@@ -880,7 +961,7 @@ export default function Workbench() {
   }
 
   const menus = [
-    ['File', ['newFile', 'newFolder', '-', 'uploadFiles', 'uploadFolder', '-', 'save', 'saveAll', 'autoSave', '-', 'download', '-', 'closeEditor', 'closeAll']],
+    ['File', ['newFile', 'newFolder', '-', 'uploadFiles', 'uploadFolder', '-', 'save', 'saveAll', 'autoSave', '-', 'download', 'downloadAll', '-', 'closeEditor', 'closeAll']],
     ['Edit', ['undo', 'redo', '-', 'find', 'replace', '-', 'format']],
     ['View', ['palette', '-', 'explorer', 'search', '-', 'sidebar', 'wordWrap', 'minimap']],
     ['Go', ['goFile', 'goLine']],
@@ -912,6 +993,10 @@ export default function Workbench() {
         '-',
         { label: 'Upload Files…', onClick: () => pickUpload(folderId, false) },
         { label: 'Upload Folder…', onClick: () => pickUpload(folderId, true) },
+        '-',
+        node
+          ? { label: 'Download as Zip', onClick: () => downloadZip(node) }
+          : { label: 'Download All as Zip', disabled: !nodes.length, onClick: () => downloadZip(null) },
       )
     } else {
       items.push({ label: 'Open', onClick: () => openFile(node) }, { label: 'Download', onClick: () => downloadNode(node) })
@@ -1093,6 +1178,10 @@ export default function Workbench() {
                   onNewFile={() => startCreate('file')}
                   onNewFolder={() => startCreate('folder')}
                   onUpload={() => pickUpload(targetFolderId(), false)}
+                  onDownload={() => {
+                    const sel = selectedId ? index.byId.get(selectedId) : null
+                    return sel ? downloadNode(sel) : downloadZip(null)
+                  }}
                   onRefresh={refresh}
                   onCollapseAll={collapseAll}
                 />

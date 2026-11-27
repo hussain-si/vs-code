@@ -159,3 +159,14 @@ export async function getSignedUrl(node, { download = false, expiresIn = 3600 } 
   if (error) throw storageError(error)
   return data.signedUrl
 }
+
+/** Signed URLs for many files in one request. Returns Map<node id, url>; missing objects are left out. */
+export async function getSignedUrls(nodes, expiresIn = 3600) {
+  if (!nodes.length) return new Map()
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrls(nodes.map(objectPath), expiresIn)
+  if (error) throw storageError(error)
+  const byPath = new Map(data.filter((d) => d.path && d.signedUrl && !d.error).map((d) => [d.path, d.signedUrl]))
+  const out = new Map()
+  for (const n of nodes) if (byPath.has(objectPath(n))) out.set(n.id, byPath.get(objectPath(n)))
+  return out
+}
